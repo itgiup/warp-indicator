@@ -3,6 +3,7 @@ import gi
 import subprocess
 import threading
 import time
+import os
 
 gi.require_version("Gtk", "3.0")
 gi.require_version("AppIndicator3", "0.1")
@@ -12,11 +13,15 @@ from gi.repository import Gtk, AppIndicator3, Notify, GLib
 APP_ID = "warp-indicator"
 CHECK_INTERVAL = 5  # seconds
 
+# Icons
+CONNECTED_ICON = "/usr/share/warp/images/CFLogo.light.png"  # Cloudflare logo
+DISCONNECTED_ICON = "network-error"
+ERROR_ICON = "dialog-warning"
 
 class WarpIndicator:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            APP_ID, "network-vpn", AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+            APP_ID, CONNECTED_ICON, AppIndicator3.IndicatorCategory.APPLICATION_STATUS
         )
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
@@ -31,7 +36,6 @@ class WarpIndicator:
         self.menu.append(self.disconnect_item)
 
         self.menu.append(Gtk.SeparatorMenuItem())
-
         quit_item = Gtk.MenuItem(label="Quit")
         quit_item.connect("activate", self.quit)
         self.menu.append(quit_item)
@@ -80,14 +84,14 @@ class WarpIndicator:
         response = dialog.run()
         dialog.destroy()
         if response == Gtk.ResponseType.OK:
-            Notify.Notification.new("WARP", "Accepting Terms of Service...", None).show()
+            Notify.Notification.new("WARP", "Launching registration...", None).show()
             self.setup_warp()
 
     def setup_warp(self):
-        """Register + mode + connect, support new & old warp-cli."""
+        """Register + set mode + connect, support new & old warp-cli."""
         help_text = self.run_cmd("warp-cli help")
         if "registration" in help_text:
-            # New syntax
+            # New warp-cli syntax
             self.run_cmd("warp-cli registration new || true")
             self.run_cmd("warp-cli mode warp || true")
         else:
@@ -112,9 +116,11 @@ class WarpIndicator:
             status = self.get_status()
             GLib.idle_add(self.update_indicator, status)
 
+            # Accept Terms popup
             if status == "registration_missing":
                 GLib.idle_add(self.accept_terms)
 
+            # Auto reconnect if disconnected and user didn't manually disconnect
             elif status != "connected" and not self.user_disconnected:
                 self.run_cmd("warp-cli connect || true")
 
@@ -122,19 +128,18 @@ class WarpIndicator:
 
     def update_indicator(self, status):
         if status == "connected":
-            self.indicator.set_icon("network-vpn")
+            if os.path.exists(CONNECTED_ICON):
+                self.indicator.set_icon(CONNECTED_ICON)
+            else:
+                self.indicator.set_icon("network-vpn")
             self.connect_item.set_sensitive(False)
             self.disconnect_item.set_sensitive(True)
         elif status == "disconnected":
-            self.indicator.set_icon("network-error")
+            self.indicator.set_icon(DISCONNECTED_ICON)
             self.connect_item.set_sensitive(True)
             self.disconnect_item.set_sensitive(False)
-        elif status == "registration_missing":
-            self.indicator.set_icon("dialog-warning")
-            self.connect_item.set_sensitive(False)
-            self.disconnect_item.set_sensitive(False)
         else:
-            self.indicator.set_icon("dialog-warning")
+            self.indicator.set_icon(ERROR_ICON)
             self.connect_item.set_sensitive(True)
             self.disconnect_item.set_sensitive(True)
 
