@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=Warp Indicator
-Comment=Hiển thị trạng thái và điều khiển Cloudflare WARP
-Exec=/usr/bin/python3 /home/v/apps/warp-indicator/warp-indicator.py
-Icon=network-vpn
-Terminal=false
-Type=Application
-Categories=Network;
-X-GNOME-Autostart-enabled=true

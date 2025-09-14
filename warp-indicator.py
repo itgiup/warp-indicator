@@ -9,7 +9,6 @@ gi.require_version("AppIndicator3", "0.1")
 
 from gi.repository import Gtk, AppIndicator3, Notify, GLib
 
-
 APP_ID = "warp-indicator"
 CHECK_INTERVAL = 5  # seconds
 
@@ -44,14 +43,19 @@ class WarpIndicator:
 
         Notify.init(APP_ID)
 
-        # Start background thread to monitor connection
+        # state
         self.running = True
+        self.user_disconnected = False
+
+        # Start background thread to monitor connection
         threading.Thread(target=self.status_loop, daemon=True).start()
 
     def run_cmd(self, cmd):
         """Run shell command and return output."""
         try:
-            return subprocess.check_output(cmd, shell=True, text=True).strip()
+            return subprocess.check_output(
+                cmd, shell=True, text=True
+            ).strip()
         except subprocess.CalledProcessError:
             return ""
 
@@ -66,21 +70,23 @@ class WarpIndicator:
             return "error"
 
     def connect_warp(self, _=None):
+        self.user_disconnected = False
         self.run_cmd("warp-cli connect")
         Notify.Notification.new("WARP", "Connecting to WARP...", None).show()
 
     def disconnect_warp(self, _=None):
+        self.user_disconnected = True
         self.run_cmd("warp-cli disconnect")
         Notify.Notification.new("WARP", "Disconnected from WARP", None).show()
 
     def status_loop(self):
-        """Background loop to keep WARP connected."""
+        """Background loop to keep WARP connected unless user disconnected."""
         while self.running:
             status = self.get_status()
             GLib.idle_add(self.update_indicator, status)
 
-            # Auto-reconnect if lost
-            if status != "connected":
+            # Auto-reconnect if lost AND user didn't disconnect manually
+            if status != "connected" and not self.user_disconnected:
                 self.run_cmd("warp-cli connect")
 
             time.sleep(CHECK_INTERVAL)
