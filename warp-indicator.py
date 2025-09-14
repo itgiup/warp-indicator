@@ -13,15 +13,15 @@ from gi.repository import Gtk, AppIndicator3, Notify, GLib
 APP_ID = "warp-indicator"
 CHECK_INTERVAL = 5  # seconds
 
-# Icons
-CONNECTED_ICON = "/usr/share/warp/images/CFLogo.light.png"  # Cloudflare logo
-DISCONNECTED_ICON = "network-error"
+# Icons (tương ứng với package mới)
+CONNECTED_ICON = "/usr/share/icons/warp-indicator/CFLogo.light.png"
+DISCONNECTED_ICON = "/usr/share/icons/warp-indicator/CFLogo.dark.png"
 ERROR_ICON = "dialog-warning"
 
 class WarpIndicator:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            APP_ID, CONNECTED_ICON, AppIndicator3.IndicatorCategory.APPLICATION_STATUS
+            APP_ID, DISCONNECTED_ICON, AppIndicator3.IndicatorCategory.APPLICATION_STATUS
         )
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
@@ -135,7 +135,10 @@ class WarpIndicator:
             self.connect_item.set_sensitive(False)
             self.disconnect_item.set_sensitive(True)
         elif status == "disconnected":
-            self.indicator.set_icon(DISCONNECTED_ICON)
+            if os.path.exists(DISCONNECTED_ICON):
+                self.indicator.set_icon(DISCONNECTED_ICON)
+            else:
+                self.indicator.set_icon("network-vpn")
             self.connect_item.set_sensitive(True)
             self.disconnect_item.set_sensitive(False)
         else:
