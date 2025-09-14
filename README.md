@@ -27,8 +27,8 @@ and will automatically reconnect if the connection drops.
 Download the latest `.deb` from [Releases](https://github.com/itgiup/warp-indicator/releases) and install:
 
 ```bash
-sudo dpkg -i warp-indicator_1.0.deb
-sudo apt-get -f install
+chmod +x ./install.sh
+./install.sh
 ```
 
 The package will:

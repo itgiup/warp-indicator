@@ -8,6 +8,7 @@ MAINTAINER="ITGiup <itgiup.com@gmail.com>"
 BUILD_DIR="/tmp/${PKGNAME}_${VERSION}"
 
 echo ">>> Cleaning old build..."
+clear && rm -rf ./build/*
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/DEBIAN"
 mkdir -p "$BUILD_DIR/usr/local/bin"
