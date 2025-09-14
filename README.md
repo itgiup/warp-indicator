@@ -4,7 +4,8 @@ A simple system tray indicator for **Cloudflare WARP (warp-cli)** on Ubuntu (GNO
 It shows WARP connection status, allows you to connect/disconnect with one click,  
 and will automatically reconnect if the connection drops.
 
-![screenshot](docs/screenshot.png)
+![screenshot](docs/app_warp_indication.png)
+![screenshot](docs/Screenshot.png)
 
 ---
 
