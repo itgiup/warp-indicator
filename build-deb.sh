@@ -107,6 +107,11 @@ else
 fi
 
 # Build .deb
-OUTPUT_DEB="${PWD}/${PKGNAME}_${VERSION}.deb"
+if [ ! -d "./build" ]; then
+    mkdir ./build
+fi
+OUTPUT_DEB="${PWD}/build/${PKGNAME}_${VERSION}.deb"
 dpkg-deb --build "$BUILD_DIR" "$OUTPUT_DEB"
 echo "✅ Built package: ${OUTPUT_DEB}"
+cp ./install.sh ./build/
+cp ./remove.sh ./build
