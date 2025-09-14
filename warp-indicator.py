@@ -14,8 +14,8 @@ APP_ID = "warp-indicator"
 CHECK_INTERVAL = 5  # seconds
 
 # Icons (tương ứng với package mới)
-CONNECTED_ICON = "/usr/share/icons/warp-indicator/CFLogo.light.png"
-DISCONNECTED_ICON = "/usr/share/icons/warp-indicator/CFLogo.dark.png"
+CONNECTED_ICON = "/usr/share/icons/warp-indicator/logo.light.svg"
+DISCONNECTED_ICON = "/usr/share/icons/warp-indicator/logo.dark.svg"
 ERROR_ICON = "dialog-warning"
 
 class WarpIndicator:

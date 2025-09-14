@@ -20,8 +20,8 @@ mkdir -p "$BUILD_DIR/usr/share/icons/warp-indicator"
 install -m 755 warp-indicator.py "$BUILD_DIR/usr/local/bin/warp-indicator"
 
 # Copy icons
-install -m 644 ./CFLogo.dark.png "$BUILD_DIR/usr/share/icons/warp-indicator/CFLogo.dark.png"
-install -m 644 ./CFLogo.light.png "$BUILD_DIR/usr/share/icons/warp-indicator/CFLogo.light.png"
+install -m 644 ./logo.dark.svg "$BUILD_DIR/usr/share/icons/warp-indicator/logo.dark.svg"
+install -m 644 ./logo.light.svg "$BUILD_DIR/usr/share/icons/warp-indicator/logo.light.svg"
 
 # Desktop entry for menu
 cat > "$BUILD_DIR/usr/share/applications/$PKGNAME.desktop" <<'EOF'
@@ -29,7 +29,7 @@ cat > "$BUILD_DIR/usr/share/applications/$PKGNAME.desktop" <<'EOF'
 Name=Warp Indicator
 Comment=Show status and control Cloudflare WARP
 Exec=/usr/local/bin/warp-indicator
-Icon=/usr/share/icons/warp-indicator/CFLogo.light.png
+Icon=/usr/share/icons/warp-indicator/logo.light.svg
 Terminal=false
 Type=Application
 Categories=Network;
@@ -41,7 +41,7 @@ cat > "$BUILD_DIR/etc/xdg/autostart/$PKGNAME.desktop" <<'EOF'
 Name=Warp Indicator
 Comment=Auto start Warp Indicator
 Exec=/usr/local/bin/warp-indicator
-Icon=/usr/share/icons/warp-indicator/CFLogo.light.png
+Icon=/usr/share/icons/warp-indicator/logo.light.svg
 Terminal=false
 Type=Application
 X-GNOME-Autostart-enabled=true
@@ -92,8 +92,8 @@ rm -f /etc/xdg/autostart/warp-indicator.desktop
 rm -f /usr/local/bin/warp-indicator
 rm -rf /usr/share/doc/warp-indicator
 rm -f /usr/share/applications/warp-indicator.desktop
-rm -f /usr/share/icons/warp-indicator/CFLogo.dark.png
-rm -f /usr/share/icons/warp-indicator/CFLogo.light.png
+rm -f /usr/share/icons/warp-indicator/logo.dark.svg
+rm -f /usr/share/icons/warp-indicator/logo.light.svg
 update-desktop-database /usr/share/applications/ || true
 exit 0
 EOF
