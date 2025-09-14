@@ -16,14 +16,12 @@ CHECK_INTERVAL = 5  # seconds
 class WarpIndicator:
     def __init__(self):
         self.indicator = AppIndicator3.Indicator.new(
-            APP_ID,
-            "network-vpn",
-            AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
+            APP_ID, "network-vpn", AppIndicator3.IndicatorCategory.APPLICATION_STATUS
         )
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
+        # Menu
         self.menu = Gtk.Menu()
-
         self.connect_item = Gtk.MenuItem(label="Connect WARP")
         self.connect_item.connect("activate", self.connect_warp)
         self.menu.append(self.connect_item)
@@ -43,51 +41,82 @@ class WarpIndicator:
 
         Notify.init(APP_ID)
 
-        # state
+        # State
         self.running = True
         self.user_disconnected = False
 
-        # Start background thread to monitor connection
+        # Start monitoring thread
         threading.Thread(target=self.status_loop, daemon=True).start()
 
     def run_cmd(self, cmd):
-        """Run shell command and return output."""
+        """Run shell command safely."""
         try:
-            return subprocess.check_output(
-                cmd, shell=True, text=True
-            ).strip()
+            return subprocess.check_output(cmd, shell=True, text=True).strip()
         except subprocess.CalledProcessError:
             return ""
 
     def get_status(self):
-        """Check WARP connection status."""
+        """Check WARP status."""
         out = self.run_cmd("warp-cli status")
         if "Connected" in out:
             return "connected"
         elif "Disconnected" in out:
             return "disconnected"
+        elif "Registration Missing" in out:
+            return "registration_missing"
         else:
             return "error"
 
+    def accept_terms(self):
+        """Popup to accept Terms of Service."""
+        dialog = Gtk.MessageDialog(
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK_CANCEL,
+            text="Cloudflare WARP Terms of Service",
+        )
+        dialog.format_secondary_text(
+            "You must accept the Terms of Service to use WARP.\nPress OK to Accept."
+        )
+        response = dialog.run()
+        dialog.destroy()
+        if response == Gtk.ResponseType.OK:
+            Notify.Notification.new("WARP", "Accepting Terms of Service...", None).show()
+            self.setup_warp()
+
+    def setup_warp(self):
+        """Register + mode + connect, support new & old warp-cli."""
+        help_text = self.run_cmd("warp-cli help")
+        if "registration" in help_text:
+            # New syntax
+            self.run_cmd("warp-cli registration new || true")
+            self.run_cmd("warp-cli mode warp || true")
+        else:
+            # Old syntax
+            self.run_cmd("warp-cli register || true")
+            self.run_cmd("warp-cli set-mode warp || true")
+        self.run_cmd("warp-cli connect || true")
+
     def connect_warp(self, _=None):
         self.user_disconnected = False
-        self.run_cmd("warp-cli connect")
+        self.run_cmd("warp-cli connect || true")
         Notify.Notification.new("WARP", "Connecting to WARP...", None).show()
 
     def disconnect_warp(self, _=None):
         self.user_disconnected = True
-        self.run_cmd("warp-cli disconnect")
+        self.run_cmd("warp-cli disconnect || true")
         Notify.Notification.new("WARP", "Disconnected from WARP", None).show()
 
     def status_loop(self):
-        """Background loop to keep WARP connected unless user disconnected."""
+        """Background monitor."""
         while self.running:
             status = self.get_status()
             GLib.idle_add(self.update_indicator, status)
 
-            # Auto-reconnect if lost AND user didn't disconnect manually
-            if status != "connected" and not self.user_disconnected:
-                self.run_cmd("warp-cli connect")
+            if status == "registration_missing":
+                GLib.idle_add(self.accept_terms)
+
+            elif status != "connected" and not self.user_disconnected:
+                self.run_cmd("warp-cli connect || true")
 
             time.sleep(CHECK_INTERVAL)
 
@@ -99,6 +128,10 @@ class WarpIndicator:
         elif status == "disconnected":
             self.indicator.set_icon("network-error")
             self.connect_item.set_sensitive(True)
+            self.disconnect_item.set_sensitive(False)
+        elif status == "registration_missing":
+            self.indicator.set_icon("dialog-warning")
+            self.connect_item.set_sensitive(False)
             self.disconnect_item.set_sensitive(False)
         else:
             self.indicator.set_icon("dialog-warning")
